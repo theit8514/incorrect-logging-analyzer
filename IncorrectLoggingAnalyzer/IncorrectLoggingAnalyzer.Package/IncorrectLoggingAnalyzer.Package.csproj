@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageId>IncorrectLoggingAnalyzer</PackageId>
+		<PackageVersion>1.0.0.0</PackageVersion>
+		<Authors>theit8514</Authors>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageProjectUrl>https://github.com/theit8514/incorrect-logging-analyzer</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/theit8514/incorrect-logging-analyzer.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<Description>IncorrectLoggingAnalyzer</Description>
+		<PackageReleaseNotes>Version 1.0.0.0 - Added analyzer for wrong class in ILogger interface and using ILogger generic in static class.</PackageReleaseNotes>
+		<Copyright>Copyright (c) 2023 theit8514</Copyright>
+		<PackageTags>IncorrectLoggingAnalyzer, analyzers</PackageTags>
+		<DevelopmentDependency>true</DevelopmentDependency>
+		<NoPackageAnalysis>true</NoPackageAnalysis>
+
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToOutput</TargetsForTfmSpecificContentInPackage>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\IncorrectLoggingAnalyzer.CodeFixes\IncorrectLoggingAnalyzer.CodeFixes.csproj" />
+		<ProjectReference Include="..\IncorrectLoggingAnalyzer\IncorrectLoggingAnalyzer.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="tools\*.ps1" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="" />
+		<None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<Target Name="_AddAnalyzersToOutput">
+		<ItemGroup>
+			<TfmSpecificPackageFile Include="$(OutputPath)\IncorrectLoggingAnalyzer.dll" PackagePath="analyzers/dotnet/cs" />
+			<TfmSpecificPackageFile Include="$(OutputPath)\IncorrectLoggingAnalyzer.CodeFixes.dll" PackagePath="analyzers/dotnet/cs" />
+		</ItemGroup>
+	</Target>
+
+</Project>
