@@ -76,7 +76,9 @@ namespace IncorrectLoggingAnalyzer
             // Replace all GenericNameSyntax nodes with the new type node.
             // This should hit all nodes in the class, including those in QualifiedNameSyntax (fully qualified).
             var oldRoot = await document.GetSyntaxRootAsync(cancellationToken);
-            var newRoot = oldRoot.ReplaceNodes(referencesOfTypeInClass, (syntax, nameSyntax) => newType);
+            var newRoot = oldRoot.ReplaceNodes(referencesOfTypeInClass, (syntax, nameSyntax) => newType
+                .WithLeadingTrivia(syntax.GetLeadingTrivia())
+                .WithTrailingTrivia(syntax.GetTrailingTrivia()));
             return document.WithSyntaxRoot(newRoot);
         }
     }

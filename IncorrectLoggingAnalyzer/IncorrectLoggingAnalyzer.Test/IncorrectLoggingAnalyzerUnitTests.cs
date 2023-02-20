@@ -254,6 +254,73 @@ namespace IncorrectLoggingAnalyzer.Test
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
+        public async Task RuleChangeType_ReplaceKeepsIndentation()
+        {
+            var test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass
+        {
+            private readonly {|#0:Microsoft.Extensions.Logging.ILogger<OtherClass>|} _logger;
+
+            public MyClass(object data,
+                ILogger<OtherClass> logger)
+            {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            private readonly Microsoft.Extensions.Logging.ILogger<OtherClass> _logger;
+
+            public OtherClass(Microsoft.Extensions.Logging.ILogger<OtherClass> logger) => _logger = logger;
+        }
+    }";
+
+            var endResult = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass
+        {
+            private readonly Microsoft.Extensions.Logging.ILogger<MyClass> _logger;
+
+            public MyClass(object data,
+                ILogger<MyClass> logger)
+            {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            private readonly Microsoft.Extensions.Logging.ILogger<OtherClass> _logger;
+
+            public OtherClass(Microsoft.Extensions.Logging.ILogger<OtherClass> logger) => _logger = logger;
+        }
+    }";
+
+            var expected = VerifyCS.Diagnostic("ILA1001").WithLocation(0)
+                .WithArguments("ConsoleApplication1.OtherClass", "ConsoleApplication1.MyClass");
+            await VerifyCS.VerifyCodeFixAsync(test, expected, endResult);
+        }
+
+        //Diagnostic and CodeFix both triggered and checked for
+        [TestMethod]
         public async Task RuleChangeType_IgnoresNonGenericLogger()
         {
             var test = @"
