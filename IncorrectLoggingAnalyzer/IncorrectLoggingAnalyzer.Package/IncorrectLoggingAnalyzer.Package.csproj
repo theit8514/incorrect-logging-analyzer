@@ -9,7 +9,7 @@
 
 	<PropertyGroup>
 		<PackageId>IncorrectLoggingAnalyzer</PackageId>
-		<PackageVersion>1.0.0.0</PackageVersion>
+		<PackageVersion>1.0.1.0</PackageVersion>
 		<Authors>theit8514</Authors>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -18,7 +18,10 @@
 		<RepositoryType>git</RepositoryType>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<Description>IncorrectLoggingAnalyzer</Description>
-		<PackageReleaseNotes>Version 1.0.0.0 - Added analyzer for wrong class in ILogger interface and using ILogger generic in static class.</PackageReleaseNotes>
+		<PackageReleaseNotes>
+			Version 1.0.1.0 - Fixed indentation removed from replaced code.
+			Version 1.0.0.0 - Added analyzer for wrong class in ILogger interface and using ILogger generic in static class.
+		</PackageReleaseNotes>
 		<Copyright>Copyright (c) 2023 theit8514</Copyright>
 		<PackageTags>IncorrectLoggingAnalyzer, analyzers</PackageTags>
 		<DevelopmentDependency>true</DevelopmentDependency>
