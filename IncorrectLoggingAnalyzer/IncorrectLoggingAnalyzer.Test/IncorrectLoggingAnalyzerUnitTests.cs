@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = IncorrectLoggingAnalyzer.Test.Verifiers.CSharpCodeFixVerifier<
     IncorrectLoggingAnalyzer.IncorrectLoggingAnalyzerAnalyzer,
@@ -250,6 +250,108 @@ namespace IncorrectLoggingAnalyzer.Test
             var expected = VerifyCS.Diagnostic("ILA1001").WithLocation(0)
                 .WithArguments("ConsoleApplication1.OtherClass", "ConsoleApplication1.MyClass");
             await VerifyCS.VerifyCodeFixAsync(test, expected, endResult);
+        }
+
+        //Diagnostic and CodeFix both triggered and checked for
+        [TestMethod]
+        public async Task RuleChangeType_ReplaceBaseType()
+        {
+            const string test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly {|#0:ILogger<OtherClass>|} _logger;
+
+            public MyClass(ILogger<OtherClass> logger) : base(logger) {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(ILogger<OtherClass> logger) => _logger = logger;
+        }
+    }";
+
+            const string endResult = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly ILogger<MyClass> _logger;
+
+            public MyClass(ILogger<MyClass> logger) : base(logger) {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(ILogger<OtherClass> logger) => _logger = logger;
+        }
+    }";
+
+            // ILogger is covariant, so you can assign the MyClass ILogger to OtherClass as the base class.
+            // This should make OtherClass log as MyClass source context.
+            var expected = VerifyCS.Diagnostic("ILA1001").WithLocation(0)
+                .WithArguments("ConsoleApplication1.OtherClass", "ConsoleApplication1.MyClass");
+            await VerifyCS.VerifyCodeFixAsync(test, expected, endResult);
+        }
+
+        //Diagnostic and CodeFix both triggered and checked for
+        [TestMethod]
+        public async Task RuleChangeType_IgnoresBaseType()
+        {
+            const string test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly ILogger<MyClass> _logger;
+
+            public MyClass(ILogger<MyClass> logger, ILogger<OtherClass> baseLogger) : base(baseLogger) {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(ILogger<OtherClass> logger) => _logger = logger;
+        }
+    }";
+
+            // In this case, a specific ILogger for OtherClass is assigned to OtherClass,
+            // but MyClass uses it's own logger.
+            // In this case both OtherClass and MyClass log as separate source contexts.
+            await VerifyCS.VerifyAnalyzerAsync(test);
         }
 
         //Diagnostic and CodeFix both triggered and checked for
