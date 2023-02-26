@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = IncorrectLoggingAnalyzer.Test.Verifiers.CSharpCodeFixVerifier<
     IncorrectLoggingAnalyzer.IncorrectLoggingAnalyzerAnalyzer,
@@ -13,7 +13,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task DoesNotReturnSpuriousDiagnostic()
         {
-            var test = @"";
+            const string test = @"";
 
             await VerifyCS.VerifyAnalyzerAsync(test);
         }
@@ -22,7 +22,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleChangeType_ReplaceGenericType()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -47,7 +47,7 @@ namespace IncorrectLoggingAnalyzer.Test
         }
     }";
 
-            var endResult = @"
+            const string endResult = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -81,7 +81,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleChangeType_ReplaceQualifiedType()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -105,7 +105,7 @@ namespace IncorrectLoggingAnalyzer.Test
         }
     }";
 
-            var endResult = @"
+            const string endResult = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -138,7 +138,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleChangeType_ReplaceMixedType()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -163,7 +163,7 @@ namespace IncorrectLoggingAnalyzer.Test
         }
     }";
 
-            var endResult = @"
+            const string endResult = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -197,7 +197,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleChangeType_ReplaceMixedType2()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -222,7 +222,7 @@ namespace IncorrectLoggingAnalyzer.Test
         }
     }";
 
-            var endResult = @"
+            const string endResult = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -256,7 +256,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleChangeType_ReplaceKeepsIndentation()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -285,7 +285,7 @@ namespace IncorrectLoggingAnalyzer.Test
         }
     }";
 
-            var endResult = @"
+            const string endResult = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -323,7 +323,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleChangeType_IgnoresNonGenericLogger()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -361,7 +361,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleChangeType_IgnoresOtherGeneric()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -399,7 +399,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleChangeType_IgnoresMultipleGeneric()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -440,7 +440,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleStatic_ReportGenericType()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -472,7 +472,7 @@ namespace IncorrectLoggingAnalyzer.Test
         [TestMethod]
         public async Task RuleStatic_ReportQualifiedType()
         {
-            var test = @"
+            const string test = @"
     using System;
     using System.Collections.Generic;
     using System.Linq;
