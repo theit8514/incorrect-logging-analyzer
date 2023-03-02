@@ -61,11 +61,20 @@ namespace IncorrectLoggingAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Change ILogger generic type.
+        ///   Looks up a localized string similar to Change ILogger generic type to current class.
         /// </summary>
-        internal static string CodeFixTitle {
+        internal static string CodeFixChangeTypeTitle {
             get {
-                return ResourceManager.GetString("CodeFixTitle", resourceCulture);
+                return ResourceManager.GetString("CodeFixChangeTypeTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Change ILogger generic type and separate base class ILogger.
+        /// </summary>
+        internal static string CodeFixSeparateBaseClassTitle {
+            get {
+                return ResourceManager.GetString("CodeFixSeparateBaseClassTitle", resourceCulture);
             }
         }
     }

@@ -117,8 +117,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="CodeFixTitle" xml:space="preserve">
-    <value>Change ILogger generic type</value>
+  <data name="CodeFixChangeTypeTitle" xml:space="preserve">
+    <value>Change ILogger generic type to current class</value>
+    <comment>The title of the code fix.</comment>
+  </data>
+  <data name="CodeFixSeparateBaseClassTitle" xml:space="preserve">
+    <value>Change ILogger generic type and separate base class ILogger</value>
     <comment>The title of the code fix.</comment>
   </data>
 </root>

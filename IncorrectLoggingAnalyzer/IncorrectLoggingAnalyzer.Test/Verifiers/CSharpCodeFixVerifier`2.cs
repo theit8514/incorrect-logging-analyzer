@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -56,14 +57,16 @@ namespace IncorrectLoggingAnalyzer.Test.Verifiers
 
         /// <inheritdoc
         ///     cref="CodeFixVerifier{TAnalyzer, TCodeFix, TTest, TVerifier}.VerifyCodeFixAsync(string, DiagnosticResult, string)" />
-        public static async Task VerifyCodeFixAsync(string source, DiagnosticResult expected, string fixedSource)
+        public static async Task VerifyCodeFixAsync(string source, DiagnosticResult expected, string fixedSource,
+            Action<Test> configureTest = null)
         {
-            await VerifyCodeFixAsync(source, new[] { expected }, fixedSource);
+            await VerifyCodeFixAsync(source, new[] { expected }, fixedSource, configureTest);
         }
 
         /// <inheritdoc
         ///     cref="CodeFixVerifier{TAnalyzer, TCodeFix, TTest, TVerifier}.VerifyCodeFixAsync(string, DiagnosticResult[], string)" />
-        public static async Task VerifyCodeFixAsync(string source, DiagnosticResult[] expected, string fixedSource)
+        public static async Task VerifyCodeFixAsync(string source, DiagnosticResult[] expected, string fixedSource,
+            Action<Test> configureTest = null)
         {
             var test = new Test
             {
@@ -71,6 +74,7 @@ namespace IncorrectLoggingAnalyzer.Test.Verifiers
                 FixedCode = fixedSource
             };
 
+            configureTest?.Invoke(test);
             test.ExpectedDiagnostics.AddRange(expected);
             await test.RunAsync(CancellationToken.None);
         }
