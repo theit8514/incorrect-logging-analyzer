@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -124,57 +124,67 @@ namespace IncorrectLoggingAnalyzer
             var baseType = generator.GenericName("ILogger", generator.IdentifierName(baseClassName));
 
             // A bit more complicated here. We want to replace all the references to the existing logger
-            // but add a new logger to base() calls.
+            // but add a new logger to base() calls
             var baseExpressions = classDeclaration.DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
+                .Where(x => x.Initializer != null)
                 .ToImmutableArray();
-
             foreach (var constructor in baseExpressions)
             {
-                // Generate a new parameters list for this constructor.
+                // Generate a new list of arguments for the base initializer. e.g. base(logger) -> base(baseLogger)
+                var newArguments = new List<ArgumentSyntax>();
+                var initializer = constructor.Initializer;
+                var addBaseLogger = false;
+                var identifierName = GenerateIdentifierName(semanticModel, constructor.Body, "baseLogger");
+                foreach (var argument in initializer.ArgumentList.Arguments)
+                {
+                    if (argument.Expression is IdentifierNameSyntax name)
+                    {
+                        var type = semanticModel.GetTypeInfo(name);
+                        // Replace this argument with the baseLogger if types match
+                        if (type.Equals(oldTypeInfo))
+                        {
+                            newArguments.Add(SF.Argument(SF.IdentifierName(identifierName)));
+                            // Ensure that we add the baseLogger to the parameters list
+                            addBaseLogger = true;
+                            continue;
+                        }
+                    }
+
+                    newArguments.Add(argument);
+                }
+
+
+                // Replace the ArgumentList inside the initializer
+                editor.ReplaceNode(initializer.ArgumentList,
+                    initializer.ArgumentList.WithArguments(SF.SeparatedList(newArguments)));
+
+                // Now we need to add the baseLogger parameter to this constructor
                 var newParameters = new List<ParameterSyntax>();
-                SyntaxToken oldParameter = default;
                 foreach (var parameter in constructor.ParameterList.Parameters)
                 {
                     // If the type of this parameter matches our old type, add it with the same identifier
                     // with the new type
                     if (semanticModel.GetTypeInfo(parameter.Type).Equals(oldTypeInfo))
-                    {
-                        oldParameter = parameter.Identifier;
                         newParameters.Add(SF.Parameter(parameter.AttributeLists, parameter.Modifiers,
                             (TypeSyntax)newType, parameter.Identifier, parameter.Default));
-                    }
                     else
-                    {
-                        // Otherwise add the parameter as normal.
+                        // Otherwise add the parameter as normal
                         newParameters.Add(parameter);
-                    }
                 }
 
-                // Generate a new parameter at the end of this parameter list, e.g. ILogger<BaseType> baseLogger
-                var identifierName = GenerateIdentifierName(semanticModel, constructor.Body, "baseLogger");
-                var newParameter = SF.Parameter(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(),
-                    SF.ParseTypeName(baseType.ToString()), SF.Identifier(identifierName), null);
-                newParameters.Add(newParameter);
+                // Only add our baseLogger parameter if the base initializer was using the existing logger
+                if (addBaseLogger)
+                {
+                    // Generate a new parameter at the end of this parameter list, e.g. ILogger<BaseType> baseLogger
+                    var newParameter = SF.Parameter(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(),
+                        (TypeSyntax)baseType, SF.Identifier(identifierName), null);
+                    newParameters.Add(newParameter);
+                }
+
                 // Replace the ParametersList inside the constructor
                 editor.ReplaceNode(constructor.ParameterList,
                     constructor.ParameterList.WithParameters(SF.SeparatedList(newParameters)));
-
-                // Generate new base constructor arguments, e.g. base(logger) -> base(baseLogger)
-                var newArguments = new List<ArgumentSyntax>();
-                var initializer = constructor.Initializer;
-                foreach (var argument in initializer.ArgumentList.Arguments)
-                {
-                    if (argument.Expression is IdentifierNameSyntax name &&
-                        name.Identifier.ValueText.Equals(oldParameter.ValueText))
-                        newArguments.Add(SF.Argument(SF.IdentifierName(identifierName)));
-                    else
-                        newArguments.Add(argument);
-                }
-
-                // Replace the ArgumentList inside the initializer
-                editor.ReplaceNode(initializer.ArgumentList,
-                    initializer.ArgumentList.WithArguments(SF.SeparatedList(newArguments)));
             }
 
             // Replace the field type with the new type

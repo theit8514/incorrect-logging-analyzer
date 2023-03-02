@@ -79,6 +79,67 @@ namespace IncorrectLoggingAnalyzer.Test
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
+        public async Task RuleChangeType_ReplaceGenericTypeKeepAttribute()
+        {
+            const string test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass
+        {
+            private readonly {|#0:ILogger<OtherClass>|} _logger;
+
+            public MyClass([My] ILogger<OtherClass> logger) => _logger = logger;
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(ILogger<OtherClass> logger) => _logger = logger;
+        }
+        class MyAttribute : Attribute { }
+    }";
+
+            const string endResult = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass
+        {
+            private readonly ILogger<MyClass> _logger;
+
+            public MyClass([My] ILogger<MyClass> logger) => _logger = logger;
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(ILogger<OtherClass> logger) => _logger = logger;
+        }
+        class MyAttribute : Attribute { }
+    }";
+
+            var expected = VerifyCS.Diagnostic("ILA1001").WithLocation(0)
+                .WithArguments("ConsoleApplication1.OtherClass", "ConsoleApplication1.MyClass");
+            await VerifyCS.VerifyCodeFixAsync(test, expected, endResult);
+        }
+
+        //Diagnostic and CodeFix both triggered and checked for
+        [TestMethod]
         public async Task RuleChangeType_ReplaceQualifiedType()
         {
             const string test = @"
@@ -521,6 +582,76 @@ namespace IncorrectLoggingAnalyzer.Test
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
+        public async Task RuleChangeType_ReplaceBaseTypeSeparateKeepAttribute()
+        {
+            const string test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly {|#0:ILogger<OtherClass>|} _logger;
+
+            public MyClass(object baseLogger, [My] ILogger<OtherClass> logger) : base(baseLogger, logger) {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(object p, ILogger<OtherClass> logger) => _logger = logger;
+        }
+        class MyAttribute : Attribute { }
+    }";
+
+            const string endResult = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly ILogger<MyClass> _logger;
+
+            public MyClass(object baseLogger, [My] ILogger<MyClass> logger, ILogger<OtherClass> baseLogger1) : base(baseLogger, baseLogger1) {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(object p, ILogger<OtherClass> logger) => _logger = logger;
+        }
+        class MyAttribute : Attribute { }
+    }";
+
+            // When calling SeparateBaseClass code fix, a new parameter in the constructor is created
+            // for the base class' ILogger and used in the base constructor.
+            // Ensure that the resulting code can compile (for example, if baseLogger identifier is used).
+            // This should make OtherClass log as OtherClass source context and MyClass log as MyClass source context.
+            var expected = VerifyCS.Diagnostic("ILA1001").WithLocation(0)
+                .WithArguments("ConsoleApplication1.OtherClass", "ConsoleApplication1.MyClass");
+            await VerifyCS.VerifyCodeFixAsync(test, expected, endResult,
+                t => { t.CodeActionEquivalenceKey = "CodeFixSeparateBaseClassTitle"; });
+        }
+
+        //Diagnostic and CodeFix both triggered and checked for
+        [TestMethod]
         public async Task RuleChangeType_WrongBaseClassDoNotRunSeparateCodeFix()
         {
             const string test = @"
@@ -697,6 +828,66 @@ namespace IncorrectLoggingAnalyzer.Test
             // but MyClass uses it's own logger.
             // In this case both OtherClass and MyClass log as separate source contexts.
             await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        //Diagnostic and CodeFix both triggered and checked for
+        [TestMethod]
+        public async Task RuleChangeType_IgnoresBaseTypeConstructor()
+        {
+            const string test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly {|#0:ILogger<OtherClass>|} _logger;
+
+            public MyClass(object a, object b, ILogger<OtherClass> logger) : base(a, b) {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            public OtherClass(object a, object b) { }
+        }
+    }";
+
+            const string endResult = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly ILogger<MyClass> _logger;
+
+            public MyClass(object a, object b, ILogger<MyClass> logger) : base(a, b) {
+                _logger = logger;
+            }
+        }
+        class OtherClass
+        {
+            public OtherClass(object a, object b) { }
+        }
+    }";
+
+            var expected = VerifyCS.Diagnostic("ILA1001").WithLocation(0)
+                .WithArguments("ConsoleApplication1.OtherClass", "ConsoleApplication1.MyClass");
+            await VerifyCS.VerifyCodeFixAsync(test, expected, endResult,
+                t => t.CodeActionEquivalenceKey = "CodeFixSeparateBaseClassTitle");
         }
 
         //Diagnostic and CodeFix both triggered and checked for
