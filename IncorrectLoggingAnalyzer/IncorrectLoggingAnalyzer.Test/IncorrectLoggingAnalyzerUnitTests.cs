@@ -652,6 +652,75 @@ namespace IncorrectLoggingAnalyzer.Test
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
+        public async Task RuleChangeType_ReplaceBaseTypeSeparateMultipleConstructors()
+        {
+            const string test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly {|#0:ILogger<OtherClass>|} _logger;
+
+            public MyClass(ILogger<OtherClass> logger) : base(logger) {
+                _logger = logger;
+            }
+
+            public MyClass() : base(null) { }
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(ILogger<OtherClass> logger) => _logger = logger;
+        }
+    }";
+
+            const string endResult = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Microsoft.Extensions.Logging;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass : OtherClass
+        {
+            private readonly ILogger<MyClass> _logger;
+
+            public MyClass(ILogger<MyClass> logger, ILogger<OtherClass> baseLogger) : base(baseLogger) {
+                _logger = logger;
+            }
+
+            public MyClass() : base(null) { }
+        }
+        class OtherClass
+        {
+            private readonly ILogger<OtherClass> _logger;
+
+            public OtherClass(ILogger<OtherClass> logger) => _logger = logger;
+        }
+    }";
+
+            // This should ignore the constructor that is not a value.
+            var expected = VerifyCS.Diagnostic("ILA1001").WithLocation(0)
+                .WithArguments("ConsoleApplication1.OtherClass", "ConsoleApplication1.MyClass");
+            await VerifyCS.VerifyCodeFixAsync(test, expected, endResult,
+                t => { t.CodeActionEquivalenceKey = "CodeFixSeparateBaseClassTitle"; });
+        }
+
+        //Diagnostic and CodeFix both triggered and checked for
+        [TestMethod]
         public async Task RuleChangeType_WrongBaseClassDoNotRunSeparateCodeFix()
         {
             const string test = @"

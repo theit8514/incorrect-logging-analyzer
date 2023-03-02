@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -138,6 +138,7 @@ namespace IncorrectLoggingAnalyzer
                 var identifierName = GenerateIdentifierName(semanticModel, constructor.Body, "baseLogger");
                 foreach (var argument in initializer.ArgumentList.Arguments)
                 {
+                    // Only check identifiers (not literals or other syntax)
                     if (argument.Expression is IdentifierNameSyntax name)
                     {
                         var type = semanticModel.GetTypeInfo(name);
