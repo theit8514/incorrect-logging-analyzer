@@ -17,8 +17,11 @@ namespace IncorrectLoggingAnalyzer.Test.Verifiers
             {
                 ReferenceAssemblies = ReferenceAssemblies
                     .AddPackages(ImmutableArray.Create(
-                        new PackageIdentity("Microsoft.Extensions.Logging.Abstractions", "2.2.0")))
-                    .AddAssemblies(ImmutableArray.Create("Microsoft.Extensions.Logging.Abstractions"));
+                        new PackageIdentity("Microsoft.Extensions.Logging.Abstractions", "2.2.0"),
+                        new PackageIdentity("Serilog", "3.1.1")))
+                    .AddAssemblies(ImmutableArray.Create(
+                        "Microsoft.Extensions.Logging.Abstractions",
+                        "Serilog"));
                 SolutionTransforms.Add((solution, projectId) =>
                 {
                     var compilationOptions = solution.GetProject(projectId)!.CompilationOptions;

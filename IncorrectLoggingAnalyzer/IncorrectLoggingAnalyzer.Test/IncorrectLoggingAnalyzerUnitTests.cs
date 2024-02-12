@@ -1,5 +1,5 @@
-﻿using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading.Tasks;
 using VerifyCS = IncorrectLoggingAnalyzer.Test.Verifiers.CSharpCodeFixVerifier<
     IncorrectLoggingAnalyzer.IncorrectLoggingAnalyzerAnalyzer,
     IncorrectLoggingAnalyzer.IncorrectLoggingAnalyzerCodeFixProvider>;
@@ -14,6 +14,59 @@ namespace IncorrectLoggingAnalyzer.Test
         public async Task DoesNotReturnSpuriousDiagnostic()
         {
             const string test = @"";
+
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        //No diagnostics expected to show up
+        [TestMethod]
+        public async Task DoesNotReturnDiagnosticForSerilog()
+        {
+            // ReSharper disable once StringLiteralTypo
+            const string test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Serilog;
+
+    namespace ConsoleApplication1
+    {
+        class MyClass
+        {
+            private readonly ILogger _logger;
+
+            public MyClass() => _logger = (ILogger) Log.ForContext<MyClass>();
+        }
+    }";
+
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        //No diagnostics expected to show up
+        [TestMethod]
+        public async Task DoesNotReturnDiagnosticForArrayGeneric()
+        {
+            const string test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using Serilog;
+    using Serilog.Events;
+
+
+    namespace ConsoleApplication1
+    {
+        class MyClass
+        {
+            private static readonly LogEventProperty[] NoProperties = Array.Empty<LogEventProperty>();
+        }
+    }";
 
             await VerifyCS.VerifyAnalyzerAsync(test);
         }

@@ -59,6 +59,13 @@ namespace IncorrectLoggingAnalyzer
 
         public override void Initialize(AnalysisContext context)
         {
+#if DEBUGGER
+            if (!Debugger.IsAttached)
+            {
+                Debugger.Launch();
+            }
+#endif
+
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.EnableConcurrentExecution();
 
@@ -75,7 +82,8 @@ namespace IncorrectLoggingAnalyzer
 
             // Find the GenericNameSyntax of this Field's declaration. This will strip out the QualifiedNameSyntax
             var generic = fieldDeclaration.Declaration
-                .DescendantNodes()
+                ?.Type
+                .DescendantNodesAndSelf()
                 .OfType<GenericNameSyntax>()
                 .FirstOrDefault();
             if (generic == null)
@@ -83,7 +91,8 @@ namespace IncorrectLoggingAnalyzer
 
             // Check if the type info contains the Microsoft.Extensions.Logging.ILogger interface.
             var typeInfo = context.SemanticModel.GetTypeInfo(generic).Type;
-            if (typeInfo.TypeKind != TypeKind.Interface ||
+            if (typeInfo == null || // Could be null if the type is not valid
+                typeInfo.TypeKind != TypeKind.Interface ||
                 typeInfo.ContainingNamespace.ToDisplayString() != // Probably a better way to handle this.
                 "Microsoft.Extensions.Logging" ||
                 typeInfo.Name != "ILogger")
